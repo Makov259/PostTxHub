@@ -1,0 +1,25 @@
+﻿services:
+  postgres:
+    image: postgres:17
+    container_name: posttxhub-postgres
+    environment:
+      POSTGRES_USER: posttx
+      POSTGRES_PASSWORD: posttx_dev
+      POSTGRES_DB: posttxhub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: posttxhub-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: posttx
+      RABBITMQ_DEFAULT_PASS: posttx_dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  postgres-data:
