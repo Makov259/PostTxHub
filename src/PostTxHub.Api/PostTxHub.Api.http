@@ -1,0 +1,23 @@
+﻿### Valid transaction -> 202
+POST http://localhost:5044/transactions
+Content-Type: application/json
+
+{
+  "externalId": "tx-001",
+  "type": "Card",
+  "amount": 49.99,
+  "currency": "EUR",
+  "accountId": "BG80BNBG96611020345678"
+}
+
+### Invalid: lowercase currency, negative amount -> 400
+POST http://localhost:5044/transactions
+Content-Type: application/json
+
+{
+  "externalId": "tx-002",
+  "type": "Card",
+  "amount": 1,
+  "currency": "jpn",
+  "accountId": "BG80BNBG96611020345678"
+}
