@@ -11,6 +11,7 @@ public enum TransactionType
 
 public sealed record CreateTransactionsRequest
 { 
+    
    [Required, StringLength(64, MinimumLength = 1)]
    public required string  ExternalId { get; init; }
    
@@ -28,7 +29,7 @@ public sealed record CreateTransactionsRequest
    [Required, StringLength(34, MinimumLength = 1)]
    public required string AccountId { get; init; }
    
-   public DateTimeOffset? OccuredAt { get; init; }
+   public DateTimeOffset? OccurredAt { get; init; }
    
 
 }
