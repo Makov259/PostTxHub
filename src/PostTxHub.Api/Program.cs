@@ -21,13 +21,14 @@ var factory = new ConnectionFactory
 {
     HostName = rabbitOptions.HostName,
     Port = rabbitOptions.Port,
-    UserName = rabbitOptions.Username,
+    UserName = rabbitOptions.UserName,
     Password = rabbitOptions.Password,
     ClientProvidedName = "posttxhub-api"
 };
 
 var rabbitConnection = await factory.CreateConnectionAsync();
 builder.Services.AddSingleton(rabbitConnection);
+builder.Services.AddSingleton<ITransactionPublisher, RabbitMqTransactionPublisher>();
 
 await using (var setupChannel = await rabbitConnection.CreateChannelAsync())
 {

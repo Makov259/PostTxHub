@@ -1,21 +1,32 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PostTxHub.Api.Contracts;
+using PostTxHub.Api.Messaging;
 
 namespace PostTxHub.Api.Controllers;
 
-
 [ApiController]
 [Route("transactions")]
-public sealed class TransactionsController : ControllerBase
+public sealed class TransactionsController(ITransactionPublisher publisher) : ControllerBase
 {
-
     [HttpPost]
-    public IActionResult Create([FromBody] CreateTransactionsRequest request)
+    public async Task<IActionResult> Create(
+        [FromBody] CreateTransactionRequest request,
+        CancellationToken cancellationToken)
     {
-        var transactionId = Guid.NewGuid();
+        var receivedAt = DateTimeOffset.UtcNow;
 
-        //Next Step: publish to RabbitMQ here.
-        
-        return Accepted(new { transactionId });
+        var message = new TransactionReceived(
+            TransactionId: Guid.NewGuid(),
+            ExternalId: request.ExternalId,
+            Type: request.Type,
+            Amount: request.Amount,
+            Currency: request.Currency,
+            AccountId: request.AccountId,
+            OccurredAt: request.OccurredAt ?? receivedAt,
+            ReceivedAt: receivedAt);
+
+        await publisher.PublishAsync(message, cancellationToken);
+
+        return Accepted(new { transactionId = message.TransactionId });
     }
 }

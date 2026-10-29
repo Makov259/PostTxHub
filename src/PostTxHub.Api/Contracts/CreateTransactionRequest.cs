@@ -9,7 +9,7 @@ public enum TransactionType
     Refund
 }
 
-public sealed record CreateTransactionsRequest
+public sealed record CreateTransactionRequest
 { 
     
    [Required, StringLength(64, MinimumLength = 1)]
