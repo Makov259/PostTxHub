@@ -10,6 +10,19 @@ Content-Type: application/json
   "accountId": "BG80BNBG96611020345678"
 }
 
+### Random test 
+POST http://localhost:5044/transactions
+Content-Type: application/json
+
+{
+  "externalId": "tx-259",
+  "type": "Refund",
+  "amount": 50.00,
+  "currency": "USD",
+  "accountId": "BG80BNBG96611020345678"
+}
+
+
 ### Invalid: lowercase currency, negative amount -> 400
 POST http://localhost:5044/transactions
 Content-Type: application/json

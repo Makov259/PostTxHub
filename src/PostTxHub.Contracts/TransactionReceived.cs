@@ -1,4 +1,4 @@
-﻿namespace PostTxHub.Api.Contracts;
+﻿namespace PostTxHub.Contracts;
 
 public sealed record TransactionReceived(
     Guid TransactionId,

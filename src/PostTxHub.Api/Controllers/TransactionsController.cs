@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PostTxHub.Api.Contracts;
 using PostTxHub.Api.Messaging;
+using PostTxHub.Contracts;
 
 namespace PostTxHub.Api.Controllers;
 

@@ -1,13 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using PostTxHub.Contracts;
 
 namespace PostTxHub.Api.Contracts;
-
-public enum TransactionType
-{
-    Card,
-    Transfer,
-    Refund
-}
 
 public sealed record CreateTransactionRequest
 { 

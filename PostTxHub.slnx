@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/PostTxHub.Api/PostTxHub.Api.csproj" />
+    <Project Path="src/PostTxHub.Contracts/PostTxHub.Contracts.csproj" />
+    <Project Path="src/PostTxHub.Worker/PostTxHub.Worker.csproj" />
   </Folder>
 </Solution>
