@@ -15,9 +15,9 @@ POST http://localhost:5044/transactions
 Content-Type: application/json
 
 {
-  "externalId": "tx-259",
-  "type": "Refund",
-  "amount": 50.00,
+  "externalId": "tx-000259",
+  "type": "Card",
+  "amount": 259.16,
   "currency": "USD",
   "accountId": "BG80BNBG96611020345678"
 }
