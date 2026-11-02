@@ -20,6 +20,9 @@
     ports:
       - "5672:5672"
       - "15672:15672"
-
+    hostname: posttxhub-rabbitmq
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
 volumes:
   postgres-data:
+  rabbitmq-data:  
