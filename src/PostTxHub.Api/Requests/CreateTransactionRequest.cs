@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using PostTxHub.Contracts;
 
-namespace PostTxHub.Api.Contracts;
+namespace PostTxHub.Api.Requests;
 
 public sealed record CreateTransactionRequest
 { 
