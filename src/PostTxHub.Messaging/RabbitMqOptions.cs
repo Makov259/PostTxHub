@@ -1,4 +1,4 @@
-﻿namespace PostTxHub.Api.Messaging;
+﻿namespace PostTxHub.Messaging;
 
 public sealed class RabbitMqOptions
 {

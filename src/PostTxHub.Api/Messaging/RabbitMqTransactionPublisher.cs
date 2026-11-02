@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization; 
 using PostTxHub.Contracts;
+using PostTxHub.Messaging;
 using RabbitMQ.Client;
 
 namespace PostTxHub.Api.Messaging;

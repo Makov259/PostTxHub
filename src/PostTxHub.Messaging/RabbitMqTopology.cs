@@ -1,6 +1,6 @@
 ﻿using RabbitMQ.Client;
 
-namespace PostTxHub.Api.Messaging;
+namespace PostTxHub.Messaging;
 
 public static class RabbitMqTopology
 {

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using PostTxHub.Api.Messaging;
+using PostTxHub.Messaging;
 using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);

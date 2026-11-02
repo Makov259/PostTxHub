@@ -13,5 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PostTxHub.Contracts\PostTxHub.Contracts.csproj" />
+    <ProjectReference Include="..\PostTxHub.Messaging\PostTxHub.Messaging.csproj" />
   </ItemGroup>
 </Project>
