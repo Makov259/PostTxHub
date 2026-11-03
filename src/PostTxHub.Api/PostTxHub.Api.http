@@ -17,8 +17,8 @@ Content-Type: application/json
 {
   "externalId": "tx-000259",
   "type": "Card",
-  "amount": 259.16,
-  "currency": "USD",
+  "amount": 16.8,
+  "currency": "BGN",
   "accountId": "BG80BNBG96611020345678"
 }
 

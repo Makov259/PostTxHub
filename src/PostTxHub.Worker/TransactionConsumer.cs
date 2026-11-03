@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PostTxHub.Contracts;
@@ -25,13 +26,27 @@ public sealed class TransactionConsumer(IConnection connection, ILogger<Transact
         var consumer = new AsyncEventingBasicConsumer(channel);
         consumer.ReceivedAsync += async (_, ea) =>
         {
-            var message = JsonSerializer.Deserialize<TransactionReceived>(ea.Body.Span, JsonOptions)!;
+            try
+            {
+                var message = JsonSerializer.Deserialize<TransactionReceived>(ea.Body.Span, JsonOptions)
+                              ?? throw new JsonException("Message body was null.");
 
-            logger.LogInformation("Received {TransactionId} {Type} {Amount} {Currency}",
-                message.TransactionId, message.Type, message.Amount, message.Currency);
+                logger.LogInformation("Received {TransactionId} {Type} {Amount} {Currency}",
+                    message.TransactionId, message.Type, message.Amount, message.Currency);
 
-            // TEMPORARY: ack right after logging. Step 6 moves this to AFTER the DB save.
-            await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                // TEMPORARY: ack right after logging. Step 6 moves this to AFTER the DB save.
+                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Could not process message {DeliveryTag}. Body: {Body}",
+                    ea.DeliveryTag, Encoding.UTF8.GetString(ea.Body.Span));
+
+                // requeue: false. Broken JSON will never get fixed by retrying.
+                // No DLQ yet, so the message is dropped. The body survives in the log above.
+                // Week 3: dead-letter queue catches these instead.
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+            }
         };
 
         await channel.BasicConsumeAsync(RabbitMqTopology.ReceivedQueue, autoAck: false, consumer, stoppingToken);
