@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PostTxHub.Contracts;
@@ -11,9 +10,12 @@ namespace PostTxHub.Worker;
 public sealed class TransactionConsumer(IConnection connection, ILogger<TransactionConsumer> logger)
     : BackgroundService
 {
+ 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
+        RespectRequiredConstructorParameters = true,
+        RespectNullableAnnotations = true
     };
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,15 +39,21 @@ public sealed class TransactionConsumer(IConnection connection, ILogger<Transact
                 // TEMPORARY: ack right after logging. Step 6 moves this to AFTER the DB save.
                 await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
             }
+            catch (JsonException ex)
+            {
+                // Permanent failure: the message itself is broken. Retrying never fixes it.
+                logger.LogError(ex, "Unreadable message {MessageId} (delivery {DeliveryTag}). Dropping it.",
+                    ea.BasicProperties.MessageId, ea.DeliveryTag);
+
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+            }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Could not process message {DeliveryTag}. Body: {Body}",
-                    ea.DeliveryTag, Encoding.UTF8.GetString(ea.Body.Span));
+                // Maybe temporary (e.g. database down). Put it back so it gets retried.
+                logger.LogWarning(ex, "Failed to process {MessageId} (delivery {DeliveryTag}). Requeueing.",
+                    ea.BasicProperties.MessageId, ea.DeliveryTag);
 
-                // requeue: false. Broken JSON will never get fixed by retrying.
-                // No DLQ yet, so the message is dropped. The body survives in the log above.
-                // Week 3: dead-letter queue catches these instead.
-                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
             }
         };
 
