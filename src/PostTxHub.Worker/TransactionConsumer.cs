@@ -4,10 +4,11 @@ using PostTxHub.Contracts;
 using PostTxHub.Messaging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using PostTxHub.Worker.Persistence;
 
 namespace PostTxHub.Worker;
 
-public sealed class TransactionConsumer(IConnection connection, ILogger<TransactionConsumer> logger)
+public sealed class TransactionConsumer(IConnection connection, ILogger<TransactionConsumer> logger,IServiceScopeFactory scopeFactory)
     : BackgroundService
 {
  
@@ -33,10 +34,30 @@ public sealed class TransactionConsumer(IConnection connection, ILogger<Transact
                 var message = JsonSerializer.Deserialize<TransactionReceived>(ea.Body.Span, JsonOptions)
                               ?? throw new JsonException("Message body was null.");
 
-                logger.LogInformation("Received {TransactionId} {Type} {Amount} {Currency}",
+                await using (var scope = scopeFactory.CreateAsyncScope())
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<PostTxHubDbContext>();
+
+                    db.Transactions.Add(new TransactionEntity
+                    {
+                        Id = message.TransactionId,
+                        ExternalId = message.ExternalId,
+                        Type = message.Type,
+                        Amount = message.Amount,
+                        Currency = message.Currency,
+                        AccountId = message.AccountId,
+                        OccurredAt = message.OccurredAt.ToUniversalTime(),   // Postgres only accepts UTC
+                        ReceivedAt = message.ReceivedAt.ToUniversalTime(),
+                        ProcessedAt = DateTimeOffset.UtcNow
+                    });
+
+                    await db.SaveChangesAsync(stoppingToken);
+                }
+
+                logger.LogInformation("Saved {TransactionId} {Type} {Amount} {Currency}",
                     message.TransactionId, message.Type, message.Amount, message.Currency);
 
-                // TEMPORARY: ack right after logging. Step 6 moves this to AFTER the DB save.
+// Ack only AFTER the row is committed. If we crash before this line, RabbitMQ redelivers.
                 await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
             }
             catch (JsonException ex)
