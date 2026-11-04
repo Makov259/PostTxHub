@@ -24,6 +24,4 @@ public sealed record CreateTransactionRequest
    public required string AccountId { get; init; }
    
    public DateTimeOffset? OccurredAt { get; init; }
-   
-
 }

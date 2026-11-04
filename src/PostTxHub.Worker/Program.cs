@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using PostTxHub.Messaging;
 using PostTxHub.Worker;
+using PostTxHub.Worker.Persistence;
 using RabbitMQ.Client;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -26,6 +28,9 @@ await using (var setupChannel = await rabbitConnection.CreateChannelAsync())
     await RabbitMqTopology.DeclareAsync(setupChannel);
 }
 
+var postgres = builder.Configuration.GetConnectionString("Postgres")
+    ?? throw new InvalidOperationException("Missing 'Postgres' configuration section.");
+builder.Services.AddDbContext<PostTxHubDbContext>(options => options.UseNpgsql(postgres)); 
 builder.Services.AddHostedService<TransactionConsumer>();
 
 await builder.Build().RunAsync();

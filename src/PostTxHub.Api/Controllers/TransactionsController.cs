@@ -10,13 +10,12 @@ namespace PostTxHub.Api.Controllers;
 public sealed class TransactionsController(ITransactionPublisher publisher) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Create(
-        [FromBody] CreateTransactionRequest request,
-        CancellationToken cancellationToken)
-    {
+    public async Task<IActionResult> Create( [FromBody] CreateTransactionRequest request, CancellationToken cancellationToken)
+    { 
         var receivedAt = DateTimeOffset.UtcNow;
 
-        var message = new TransactionReceived(
+        var message = new TransactionReceived
+        (
             TransactionId: Guid.NewGuid(),
             ExternalId: request.ExternalId,
             Type: request.Type,
@@ -24,7 +23,8 @@ public sealed class TransactionsController(ITransactionPublisher publisher) : Co
             Currency: request.Currency,
             AccountId: request.AccountId,
             OccurredAt: request.OccurredAt ?? receivedAt,
-            ReceivedAt: receivedAt);
+            ReceivedAt: receivedAt
+        );
 
         await publisher.PublishAsync(message, cancellationToken);
 
