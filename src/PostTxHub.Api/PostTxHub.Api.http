@@ -15,10 +15,10 @@ POST http://localhost:5044/transactions
 Content-Type: application/json
 
 {
-  "externalId": "tx-000259",
-  "type": "Card",
-  "amount": 16.8,
-  "currency": "BGN",
+  "externalId": "tx-004",
+  "type": "Transfer",
+  "amount": 99.7,
+  "currency": "EUR",
   "accountId": "BG80BNBG96611020345678"
 }
 
