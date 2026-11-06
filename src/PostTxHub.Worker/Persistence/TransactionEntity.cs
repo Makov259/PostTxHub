@@ -14,4 +14,5 @@ public sealed class TransactionEntity
     public DateTimeOffset ReceivedAt { get; set; }
     public DateTimeOffset ProcessedAt { get; set; }
     
+    
 }

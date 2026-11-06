@@ -16,9 +16,9 @@ Content-Type: application/json
 
 {
   "externalId": "tx-004",
-  "type": "Transfer",
-  "amount": 99.7,
-  "currency": "EUR",
+  "type": "Refund",
+  "amount": 3000.53,
+  "currency": "JPN",
   "accountId": "BG80BNBG96611020345678"
 }
 

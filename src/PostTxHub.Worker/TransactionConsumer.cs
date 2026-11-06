@@ -7,7 +7,6 @@ using PostTxHub.Messaging;
 using PostTxHub.Worker.Persistence;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-
 namespace PostTxHub.Worker;
 
 public sealed class TransactionConsumer(
