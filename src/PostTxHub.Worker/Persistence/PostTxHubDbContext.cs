@@ -12,6 +12,7 @@ public sealed class PostTxHubDbContext(DbContextOptions<PostTxHubDbContext> opti
         tx.HasKey(t => t.Id);
         tx.Property(t => t.Id).ValueGeneratedNever();
         tx.Property(t => t.ExternalId).HasMaxLength(64);
+        tx.HasIndex(t => t.ExternalId).IsUnique();
         tx.Property(t => t.Type).HasConversion<string>().HasMaxLength(20);
         tx.Property(t => t.Amount).HasPrecision(19, 4);
         tx.Property(t => t.Currency).HasMaxLength(3).IsFixedLength();

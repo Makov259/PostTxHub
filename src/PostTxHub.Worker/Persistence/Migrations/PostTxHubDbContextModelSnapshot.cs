@@ -63,6 +63,9 @@ namespace PostTxHub.Worker.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
                     b.ToTable("Transactions");
                 });
 #pragma warning restore 612, 618

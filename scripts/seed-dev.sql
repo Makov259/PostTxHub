@@ -13,3 +13,9 @@
     (gen_random_uuid(), 'seed-010', 'Transfer', 112.7, 'EUR', 'BG80BNBG96611176783678', now() - interval '10 minutes', now() - interval '5 minutes', now());    
     
 
+UPDATE "Transactions"
+SET "Type" = 'Card'
+WHERE "Currency" = 'USD
+
+
+TRUNCATE "Transactions"

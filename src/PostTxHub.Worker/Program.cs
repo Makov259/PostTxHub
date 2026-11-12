@@ -33,4 +33,5 @@ var postgres = builder.Configuration.GetConnectionString("Postgres")
 builder.Services.AddDbContext<PostTxHubDbContext>(options => options.UseNpgsql(postgres)); 
 builder.Services.AddHostedService<TransactionConsumer>();
 
-await builder.Build().RunAsync();
+await builder.Build().RunAsync(); 
+

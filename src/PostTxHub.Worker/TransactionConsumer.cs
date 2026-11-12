@@ -25,20 +25,22 @@ public sealed class TransactionConsumer(
     {
         await using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-        // Take at most 10 unacked messages at a time
+
         await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
         consumer.ReceivedAsync += async (_, ea) =>
         {
+            TransactionReceived? message = null;
             try
             {
-                var message = JsonSerializer.Deserialize<TransactionReceived>(ea.Body.Span, JsonOptions)
+                 message = JsonSerializer.Deserialize<TransactionReceived>(ea.Body.Span, JsonOptions)
                               ?? throw new JsonException("Message body was null.");
 
                 await using (var scope = scopeFactory.CreateAsyncScope())
                 {
                     var db = scope.ServiceProvider.GetRequiredService<PostTxHubDbContext>();
+
 
                     db.Transactions.Add(new TransactionEntity
                     {
@@ -48,7 +50,7 @@ public sealed class TransactionConsumer(
                         Amount = message.Amount,
                         Currency = message.Currency,
                         AccountId = message.AccountId,
-                        OccurredAt = message.OccurredAt.ToUniversalTime(),   // Postgres only accepts UTC
+                        OccurredAt = message.OccurredAt.ToUniversalTime(), // Postgres only accepts UTC
                         ReceivedAt = message.ReceivedAt.ToUniversalTime(),
                         ProcessedAt = DateTimeOffset.UtcNow
                     });
@@ -70,7 +72,11 @@ public sealed class TransactionConsumer(
 
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
             }
-            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException
+                                               {
+                                                   SqlState: PostgresErrorCodes.UniqueViolation,
+                                                   ConstraintName: "PK_Transactions"
+                                               })
             {
                 // 2. Redelivered duplicate: this Id is already in the table, so the job is already done.
                 logger.LogInformation("Duplicate delivery {MessageId}, already saved. Acking.",
@@ -78,25 +84,54 @@ public sealed class TransactionConsumer(
 
                 await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
             }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException
+                                               {
+                                                   SqlState: PostgresErrorCodes.UniqueViolation,
+                                                   ConstraintName: "IX_Transactions_ExternalId"
+                                               })
+            {
+                //3. Client duplicate , same ExternalId
+                
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var db = scope.ServiceProvider.GetRequiredService<PostTxHubDbContext>();
+
+                var existing = await db.Transactions
+                    .AsNoTracking()
+                    .SingleAsync(t => t.ExternalId == message!.ExternalId, stoppingToken);
+
+                bool sameData = false;
+                if (existing.Amount == message.Amount && existing.Type == message.Type &&
+                    existing.Currency == message.Currency && existing.AccountId == message.AccountId) sameData = true;
+                if (sameData)
+                {
+                    logger.LogInformation(ex,"Client retry ,{ExternalId} already saved {MessageId}, acking.",message.ExternalId,ea.BasicProperties.MessageId);
+                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                }
+                else
+                {
+                    logger.LogError(ex,"Conflict, same ExternalId {ExternalId}. with different data. Rejected {MessageId}, put into DLQ.",message.ExternalId,ea.BasicProperties.MessageId);
+                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                }
+
+            }
             catch (Exception ex) when (IsTransient(ex))
             {
-                // 3. Temporary: database down, timeout, or app shutting down. Retry later.
+                // 4. Temporary: database down, timeout, or app shutting down. Retry later.
                 logger.LogWarning(ex, "Temporary failure for {MessageId}. Requeueing in 2s.",
                     ea.BasicProperties.MessageId);
 
-                await Task.Delay(TimeSpan.FromSeconds(2));   // crude brake against a tight loop. Week 3: real retries.
+                await Task.Delay(TimeSpan.FromSeconds(2)); // crude brake against a tight loop. Week 3: real retries.
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
             }
             catch (Exception ex)
             {
-                // 4. Unknown error: retrying probably won't help. Week 3: send to the DLQ instead.
+                // 5. Unknown error: retrying probably won't help. Week 3: send to the DLQ instead.
                 logger.LogError(ex, "Permanent failure for {MessageId}. Dropping it.",
                     ea.BasicProperties.MessageId);
 
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
             }
         };
-
         await channel.BasicConsumeAsync(RabbitMqTopology.ReceivedQueue, autoAck: false, consumer, stoppingToken);
 
         // Keep running until the app is told to stop
