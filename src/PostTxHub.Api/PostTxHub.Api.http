@@ -1,4 +1,16 @@
-﻿### Valid transaction -> 202
+﻿### ErrorCode 400
+POST http://localhost:5044/transactions
+Content-Type: application/json
+
+{
+  "externalId": "tx-057",
+  "type": "Card",
+  "amount": "111",
+  "currency": "EUR",
+  "accountId": "BG80BNBG989328838145678"
+}
+
+### Valid transaction -> 202
 POST http://localhost:5044/transactions
 Content-Type: application/json
 
@@ -34,3 +46,5 @@ Content-Type: application/json
   "currency": "jpn",
   "accountId": "BG80BNBG96611020345678"
 }
+
+

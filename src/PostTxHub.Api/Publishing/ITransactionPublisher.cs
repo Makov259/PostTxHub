@@ -1,6 +1,6 @@
 ﻿using PostTxHub.Contracts;
 
-namespace PostTxHub.Api.Messaging;
+namespace PostTxHub.Api.Publishing;
 
 public interface ITransactionPublisher
 {

@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using PostTxHub.Api.Messaging;
+using PostTxHub.Api.Publishing;
 using PostTxHub.Messaging;
 using RabbitMQ.Client;
 
@@ -30,6 +30,7 @@ builder.Services.AddSingleton<ITransactionPublisher, RabbitMqTransactionPublishe
 
 await using (var setupChannel = await rabbitConnection.CreateChannelAsync())
 {await RabbitMqTopology.DeclareAsync(setupChannel);}
+
 
 var app = builder.Build();
 

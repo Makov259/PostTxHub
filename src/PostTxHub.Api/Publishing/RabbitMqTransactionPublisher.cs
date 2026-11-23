@@ -1,10 +1,9 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization; 
+using System.Text.Json.Serialization;
 using PostTxHub.Contracts;
 using PostTxHub.Messaging;
 using RabbitMQ.Client;
-
-namespace PostTxHub.Api.Messaging;
+namespace PostTxHub.Api.Publishing;
 
 public sealed class RabbitMqTransactionPublisher(IConnection connection) : ITransactionPublisher
 {

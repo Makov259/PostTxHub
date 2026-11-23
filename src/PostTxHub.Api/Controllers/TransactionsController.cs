@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PostTxHub.Api.Messaging;
+using PostTxHub.Api.Publishing;
 using PostTxHub.Api.Requests;
 using PostTxHub.Contracts;
-
 namespace PostTxHub.Api.Controllers;
 
 [ApiController]
 [Route("transactions")]
-public sealed class TransactionsController(ITransactionPublisher publisher) : ControllerBase
+public sealed class TransactionsController(ITransactionPublisher publisher,IServiceScopeFactory scopeFactory) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Create( [FromBody] CreateTransactionRequest request, CancellationToken cancellationToken)
@@ -30,4 +29,16 @@ public sealed class TransactionsController(ITransactionPublisher publisher) : Co
 
         return Accepted(new { transactionId = message.TransactionId });
     }
+
+    /*
+    [HttpGet]
+    public async Task<IActionResult> Get(Guid transactionId, CancellationToken cancellationToken)
+    {
+        TransactionReceived? tx = null;
+    
+        await using (var scope = scopeFactory.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PostTxHubDbContext>()
+        } 
+    }*/
 }

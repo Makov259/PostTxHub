@@ -4,6 +4,8 @@ using PostTxHub.Worker;
 using PostTxHub.Worker.Persistence;
 using RabbitMQ.Client;
 
+
+
 var builder = Host.CreateApplicationBuilder(args);
 
 var rabbitOptions = builder.Configuration
