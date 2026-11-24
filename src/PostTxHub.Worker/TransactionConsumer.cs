@@ -68,8 +68,8 @@ public sealed class TransactionConsumer(
             }
             catch (JsonException ex)
             {
-                // 1. Broken message: retrying never fixes it. Drop it.
-                logger.LogError(ex, "Unreadable message {MessageId} (delivery {DeliveryTag}). Dropping it.",
+                // 1. Broken message: retrying never fixes it. Send to the DLQ
+                logger.LogError(ex, "Unreadable message {MessageId} (delivery {DeliveryTag}). Sent to DLQ.",
                     ea.BasicProperties.MessageId, ea.DeliveryTag);
 
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
@@ -111,7 +111,7 @@ public sealed class TransactionConsumer(
                 }
                 else
                 {
-                    logger.LogError(ex,"Conflict, same ExternalId {ExternalId}. with different data. Rejected {MessageId}, put into DLQ.",message.ExternalId,ea.BasicProperties.MessageId);
+                    logger.LogError(ex,"Conflict: ExternalId {ExternalId} already saved with different data. Message {MessageId} sent to DLQ.",message.ExternalId,ea.BasicProperties.MessageId);
                     await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                 }
 
@@ -140,15 +140,15 @@ public sealed class TransactionConsumer(
                }
                else
                {
-                   logger.LogError(ex, "Out of retries for {MessageId} after {Attempt} attempts. Dropping it.",
+                   logger.LogError(ex, "Out of retries for {MessageId} after {Attempt} attempts. Sent to DLQ.",
                        ea.BasicProperties.MessageId, attempt);
                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
                }
             }
             catch (Exception ex)
             {
-                // 5. Unknown error: retrying probably won't help. Week 3: send to the DLQ instead.
-                logger.LogError(ex, "Permanent failure for {MessageId}. Dropping it.",
+                // 5. Unknown error: retrying probably won't help. Send to the DLQ.
+                logger.LogError(ex, "Permanent failure for {MessageId}. Sent to DQL.",  
                     ea.BasicProperties.MessageId);
 
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
