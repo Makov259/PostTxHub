@@ -2,10 +2,8 @@
 
 public enum TransactionType
 {
-
 Card,
 Transfer,
 Refund
-
 }
 

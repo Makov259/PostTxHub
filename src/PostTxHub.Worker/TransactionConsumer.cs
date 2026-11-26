@@ -24,8 +24,6 @@ public sealed class TransactionConsumer(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
-
-
         await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 10, global: false, stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
@@ -40,8 +38,7 @@ public sealed class TransactionConsumer(
                 await using (var scope = scopeFactory.CreateAsyncScope())
                 {
                     var db = scope.ServiceProvider.GetRequiredService<PostTxHubDbContext>();
-
-
+                    
                     db.Transactions.Add(new TransactionEntity
                     {
                         Id = message.TransactionId,
@@ -99,6 +96,7 @@ public sealed class TransactionConsumer(
 
                 var existing = await db.Transactions
                     .AsNoTracking()
+                    
                     .SingleAsync(t => t.ExternalId == message!.ExternalId, stoppingToken);
 
                 bool sameData = false;
@@ -134,7 +132,7 @@ public sealed class TransactionConsumer(
                    await channel.BasicPublishAsync(exchange: "", routingKey: retryQueue,
                        mandatory: false, basicProperties: props, body: ea.Body);
                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-
+ 
                    logger.LogWarning("Temporary failure for {MessageId}. Attempt {Attempt}, retrying via {RetryQueue}.",
                        ea.BasicProperties.MessageId, attempt + 1, retryQueue);
                }
@@ -148,7 +146,7 @@ public sealed class TransactionConsumer(
             catch (Exception ex)
             {
                 // 5. Unknown error: retrying probably won't help. Send to the DLQ.
-                logger.LogError(ex, "Permanent failure for {MessageId}. Sent to DQL.",  
+                logger.LogError(ex, "Permanent failure for {MessageId}. Sent to DLQ.",
                     ea.BasicProperties.MessageId);
 
                 await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);

@@ -37,6 +37,7 @@ public sealed class RabbitMqTransactionPublisher(IConnection connection) : ITran
             mandatory: true,
             basicProperties: properties,
             body: body,
+            
             cancellationToken: cancellationToken);
     }
 }
