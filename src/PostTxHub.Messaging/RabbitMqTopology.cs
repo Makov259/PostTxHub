@@ -9,10 +9,9 @@ public static class RabbitMqTopology
     public const string Retry1sQueue = "transactions.retry.1s";
     public const string Retry5sQueue = "transactions.retry.5s";
     public const string Retry30sQueue = "transactions.retry.30s";
-    public const string Retry1mQueue = "transactions.retry.1m";
     public const string DeadLetterQueue = "transactions.dead";
 
-    public static readonly string[] RetryQueues = [Retry1sQueue, Retry5sQueue, Retry30sQueue, Retry1mQueue];
+    public static readonly string[] RetryQueues = [Retry1sQueue, Retry5sQueue, Retry30sQueue];
    
     
 
@@ -52,14 +51,6 @@ public static class RabbitMqTopology
                 ["x-dead-letter-exchange"] = "",
                 ["x-dead-letter-routing-key"] = ReceivedQueue
             });
-        await channel.QueueDeclareAsync(Retry1mQueue, durable: true, exclusive: false, autoDelete: false,
-            arguments: new Dictionary<string, object?>
-            {
-                ["x-message-ttl"] = 60000,
-                ["x-dead-letter-exchange"] = "",
-                ["x-dead-letter-routing-key"] = ReceivedQueue
-            });
-        
         
         //Bindings
         await channel.QueueBindAsync(ReceivedQueue,Exchange,routingKey: "transaction.#");
