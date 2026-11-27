@@ -38,7 +38,8 @@ public sealed class TransactionConsumer(
                 await using (var scope = scopeFactory.CreateAsyncScope())
                 {
                     var db = scope.ServiceProvider.GetRequiredService<PostTxHubDbContext>();
-                    
+
+                    var now = DateTimeOffset.UtcNow;
                     db.Transactions.Add(new TransactionEntity
                     {
                         Id = message.TransactionId,
@@ -49,14 +50,29 @@ public sealed class TransactionConsumer(
                         AccountId = message.AccountId,
                         OccurredAt = message.OccurredAt.ToUniversalTime(), // Postgres only accepts UTC
                         ReceivedAt = message.ReceivedAt.ToUniversalTime(),
-                        ProcessedAt = DateTimeOffset.UtcNow
+                        ProcessedAt = now
                     });
 
+                    var processed = new TransactionProcessed(
+                        message.TransactionId,
+                        message.ExternalId,
+                        message.Type,
+                        message.Amount,
+                        message.Currency,
+                        now
+                    );
+                    
+                    db.OutboxMessages.Add(new OutboxMessage
+                    {
+                        Id = Guid.NewGuid(),
+                        Type = nameof(TransactionProcessed),
+                        Payload = JsonSerializer.Serialize(processed, JsonOptions),
+                        CreatedAt = now
+
+                    });
+                    
                     await db.SaveChangesAsync(stoppingToken);
                 }
-
-    
-                
                 logger.LogInformation("Saved {TransactionId} {Type} {Amount} {Currency}",
                     message.TransactionId, message.Type, message.Amount, message.Currency);
 
@@ -103,7 +119,7 @@ public sealed class TransactionConsumer(
                     existing.Currency == message.Currency && existing.AccountId == message.AccountId) sameData = true;
                 if (sameData)
                 {
-                    logger.LogInformation(ex,"Client retry ,{ExternalId} already saved {MessageId}, acking.",message.ExternalId,ea.BasicProperties.MessageId);
+                    logger.LogInformation("Client retry ,{ExternalId} already saved {MessageId}, acking.",message.ExternalId,ea.BasicProperties.MessageId);
                     await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
                 }
                 else
