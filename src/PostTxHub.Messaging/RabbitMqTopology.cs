@@ -5,6 +5,8 @@ namespace PostTxHub.Messaging;
 public static class RabbitMqTopology
 {
     public const string Exchange = "transactions";
+    public const string ProcessedExchange = "transactions.processed";
+    public const string ProcessedAuditQueue = "transactions.processed.audit";
     public const string ReceivedQueue = "transactions.received";
     public const string Retry1sQueue = "transactions.retry.1s";
     public const string Retry5sQueue = "transactions.retry.5s";
@@ -20,6 +22,7 @@ public static class RabbitMqTopology
     {
         //Exchanges
         await channel.ExchangeDeclareAsync(Exchange, ExchangeType.Topic, durable:true);
+        await channel.ExchangeDeclareAsync(ProcessedExchange, ExchangeType.Fanout, durable: true);
         
         //Queues
         await channel.QueueDeclareAsync(DeadLetterQueue, durable: true, exclusive: false, autoDelete: false);
@@ -51,10 +54,11 @@ public static class RabbitMqTopology
                 ["x-dead-letter-exchange"] = "",
                 ["x-dead-letter-routing-key"] = ReceivedQueue
             });
+        await channel.QueueDeclareAsync(ProcessedAuditQueue, durable: true, exclusive: false, autoDelete: false);
         
         //Bindings
         await channel.QueueBindAsync(ReceivedQueue,Exchange,routingKey: "transaction.#");
-
+        await channel.QueueBindAsync(ProcessedAuditQueue, ProcessedExchange, routingKey: "");
     }
     
     

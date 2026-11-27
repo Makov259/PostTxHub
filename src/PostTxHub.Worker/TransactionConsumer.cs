@@ -122,7 +122,7 @@ public sealed class TransactionConsumer(
                     logger.LogInformation("Client retry ,{ExternalId} already saved {MessageId}, acking.",message.ExternalId,ea.BasicProperties.MessageId);
                     await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
                 }
-                else
+                else 
                 {
                     logger.LogError(ex,"Conflict: ExternalId {ExternalId} already saved with different data. Message {MessageId} sent to DLQ.",message.ExternalId,ea.BasicProperties.MessageId);
                     await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
