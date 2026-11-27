@@ -96,11 +96,10 @@ public sealed class TransactionConsumer(
 
                 var existing = await db.Transactions
                     .AsNoTracking()
-                    
                     .SingleAsync(t => t.ExternalId == message!.ExternalId, stoppingToken);
 
                 bool sameData = false;
-                if (existing.Amount == message.Amount && existing.Type == message.Type &&
+                if (existing.Amount == message!.Amount && existing.Type == message.Type &&
                     existing.Currency == message.Currency && existing.AccountId == message.AccountId) sameData = true;
                 if (sameData)
                 {
